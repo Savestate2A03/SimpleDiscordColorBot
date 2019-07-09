@@ -1,5 +1,6 @@
 import discord
 import re
+import requests
 
 from discord.ext import commands
 
@@ -7,6 +8,15 @@ bot = commands.Bot(command_prefix='!')
 
 # disable default help
 bot.remove_command('help')
+
+# -------------------
+
+# use requests to query the colourlovers API
+async def color_lover_api(keywords):
+    keywords = keywords.replace(" ", "+") # they use + instead of %20
+    url = f"http://www.colourlovers.com/api/colors?keywords={keywords}&numResults=1&format=json"
+    hexcode = "#" + requests.get(url).json()[0]["hex"] # fancy
+    return hexcode
 
 # remove colors, returns the number of 
 # roles removed from the specified user
@@ -38,21 +48,26 @@ async def source(ctx):
 # simple help command
 @bot.command()
 async def help(ctx):
-    await ctx.send("Go here and pick out a color : <https://htmlcolorcodes.com/color-picker/>, then run the command `!color #RRGGBB` where '#RRGGBB' is the hex code you want !")
+    await ctx.send("Go here and pick out a color : "
+        "<https://htmlcolorcodes.com/color-picker/>, then run the command "
+        "`!color #RRGGBB` where '#RRGGBB' is the hex code you want !\n"
+        "You can also use general descriptions of colors (ex: `!color dark purple`) "
+        "thanks to the colourlovers API, so shoutouts to them !")
 
 @bot.command()
 async def color(ctx, *color):
     # if the command is improperly
     # formatted, invoke help and exit
-    if len(color) != 1:
+    if len(color) == 0:
         await help.invoke(ctx)
         return
 
     message = ctx.message
     author  = message.author 
     guild   = message.guild
+    color_lover = False # flag if used the colourlovers API
 
-    color = color[0]
+    color = " ".join(color)
     color = color.upper() # makes things easier
 
     if color == "REMOVE":
@@ -69,8 +84,9 @@ async def color(ctx, *color):
     # look for hex code match
     re_color = re.compile(r'^\#[0-9A-F]{6}$')
     if not re_color.match(color):
-        await ctx.send("not a hex code ):")
-        return
+        # if not a hex code, use colourlovers API
+        color_lover = True 
+        color = await color_lover_api(color)
 
     # remove all color roles in preperation
     # for a new color role
@@ -97,7 +113,9 @@ async def color(ctx, *color):
     # assign the role we found/created
     await author.add_roles(assigned_role)
 
-    await ctx.send("colorized !")
+    await ctx.send(f"colorized !")
+
+# -------------------
 
 # read token from token.txt
 token = "womp"
