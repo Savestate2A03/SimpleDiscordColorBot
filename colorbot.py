@@ -38,20 +38,20 @@ async def color_lover_api(keywords):
 # (generally 1 but jic one gets stuck)
 async def remove_colors(ctx, author):
     color_roles = []
+    re_color = re.compile(r'^\#[0-9A-F]{6}$')
     for role in author.roles:
         # only remove color roles
-        if role.name.startswith("#"):
+        if re_color.match(role.name.upper()):
             color_roles.append(role)
 
     # once all the roles are collected,
     # remove them from the user
     for role in color_roles:
         await author.remove_roles(role)
-
-    # if the role is no longer being used,
-    # delete it. run it async as there's 
-    # a 10 second (or so) wait in the check
-    asyncio.create_task(sleep_check_and_delete_role(role))
+        # if the role is no longer being used,
+        # delete it. run it async as there's 
+        # a 10 second (or so) wait in the check
+        asyncio.create_task(sleep_check_and_delete_role(role))
 
     return len(color_roles)
 
