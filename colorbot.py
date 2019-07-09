@@ -1,6 +1,7 @@
 import discord
 import re
 import requests
+import asyncio
 
 from discord.ext import commands
 
@@ -10,6 +11,20 @@ bot = commands.Bot(command_prefix='!')
 bot.remove_command('help')
 
 # -------------------
+
+# check if a role is not being used, and delete it
+# this waits a bit before checking since discord
+# likes to take some time before reporting changes
+async def sleep_check_and_delete_role(role):
+    await asyncio.sleep(10) # give time before checking
+    return await check_and_delete_role(role)
+
+# this is only called directly from the purge command
+async def check_and_delete_role(role):
+    if len(role.members) == 0:
+        await role.delete()
+        return True
+    return False
 
 # use requests to query the colourlovers API
 async def color_lover_api(keywords):
@@ -34,9 +49,9 @@ async def remove_colors(ctx, author):
         await author.remove_roles(role)
 
     # if the role is no longer being used,
-    # delete it.
-    if len(role.members) == 0:
-        await role.delete()
+    # delete it. run it async as there's 
+    # a 10 second (or so) wait in the check
+    asyncio.create_task(sleep_check_and_delete_role(role))
 
     return len(color_roles)
 
@@ -114,6 +129,42 @@ async def color(ctx, *color):
     await author.add_roles(assigned_role)
 
     await ctx.send(f"colorized !")
+
+# remove colors that somehow dont get deleted
+@bot.command()
+async def purge(ctx):
+    message = ctx.message
+    author  = message.author 
+    guild   = message.guild
+    allowed = author.guild_permissions.manage_roles
+
+    if not allowed:
+        await ctx.send("you can't manage roles !")
+        return
+
+    # discord throttles a lot of stuff here
+    # so going through all the roles takes a little while
+    await ctx.send(f"purging unassigned colors ! ... this may take a sec ...")
+
+    re_color = re.compile(r'^\#[0-9A-F]{6}$')
+    num_deleted = 0
+
+    roles = guild.roles
+    progress = await ctx.send(f"progress: 0/{len(roles)}")
+    iterations = 0
+
+    for role in roles:
+        if re_color.match(role.name): # if a color role
+            deleted = await check_and_delete_role(role)
+            if deleted:
+                num_deleted += 1
+        iterations += 1
+        # edit our previous progress message (fancy)
+        await progress.edit(content="progress: "
+                f"{iterations}/{len(roles)}")
+
+    # final report
+    await ctx.send(f"removed {num_deleted} unassigned colors !")
 
 # -------------------
 
