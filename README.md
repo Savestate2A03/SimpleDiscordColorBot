@@ -1,5 +1,5 @@
 # SimpleDiscordColorBot
-Very simple hex code based color role assign bot for Discord
+Very simple hex code based colour role assign bot for Discord
 
 # Requirements
  * Python 3.7.4
@@ -16,10 +16,10 @@ Make sure your Discord bot token is in a file called `token.txt` in the same dir
 
 # Commands
 `!color #RRGGBB`  
-Set your color to a specific hex code
+Set your favourite colour to a specific hex code
  
 `!color general description`  
-Set your color to a general description (ex: desaturated cyan)  
+Set your colour to a general description (ex: desaturated cyan)  
 *Uses the COLOURlovers API*
 
 `!color remove`  
