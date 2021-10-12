@@ -30,7 +30,8 @@ async def check_and_delete_role(role):
 async def color_lover_api(keywords):
     keywords = keywords.replace(" ", "+") # they use + instead of %20
     url = f"http://www.colourlovers.com/api/colors?keywords={keywords}&numResults=1&format=json"
-    hexcode = "#" + requests.get(url).json()[0]["hex"] # fancy
+    headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
+    hexcode = "#" + requests.get(url, headers=headers).json()[0]["hex"] # fancy
     return hexcode
 
 # remove colors, returns the number of 
