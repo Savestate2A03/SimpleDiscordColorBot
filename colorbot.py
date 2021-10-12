@@ -69,7 +69,7 @@ async def help(ctx):
         "You can also use general descriptions of colors (ex: `!color dark purple`) "
         "thanks to the colourlovers API, so shoutouts to them !")
 
-@bot.command()
+@bot.command(name="color", aliases=["colour"])
 async def color(ctx, *color):
     # if the command is improperly
     # formatted, invoke help and exit
